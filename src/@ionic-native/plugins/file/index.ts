@@ -157,6 +157,12 @@ export interface Entry {
   ): void;
 
   /**
+   * Look up metadata about this entry.
+   * @returns {Promise<Metadata>} A promise with the `Metadata`
+   */
+  getMetadataAsync(): Promise<Metadata>;
+
+  /**
    * Set the metadata of the entry.
    * @param successCallback {Function} is called with a Metadata object
    * @param errorCallback {Function} is called with a FileError
@@ -223,6 +229,7 @@ export interface Entry {
    * </ul>
    *
    * Directory copies are always recursive--that is, they copy all contents of the directory.
+   * @deprecated On Android, use the method `this.copy()`, to compatibility with **Android 9+**
    */
   copyTo(
     parent: DirectoryEntry,
@@ -230,6 +237,11 @@ export interface Entry {
     successCallback?: EntryCallback,
     errorCallback?: ErrorCallback
   ): void;
+
+  copy(
+    parent: DirectoryEntry | Entry,
+    newName?: string
+  ): Promise<Entry>;
 
   /**
    * Returns a URL that can be used to identify this entry. Unlike the URN defined in [FILE-API-ED], it has no specific expiration; as it describes a location on disk, it should be valid at least as long as that location exists.
@@ -258,6 +270,12 @@ export interface Entry {
     successCallback: DirectoryEntryCallback,
     errorCallback?: ErrorCallback
   ): void;
+
+  /**
+   * Look up the parent DirectoryEntry containing this Entry. If this Entry is the root of its filesystem, its parent is itself.
+   * @return {Promise<DirectoryEntry>} A promise that resolves a parent DirectoryEntry 
+   */
+  getParentAsync(): Promise<DirectoryEntry>;
 }
 
 /**
@@ -571,6 +589,13 @@ export declare class FileError {
   /** Error code */
   code: number;
   message: string;
+  messageType?: string;
+  exception?: {
+    name: string;
+    message: string;
+    cause?: string;
+  }
+  getMessage(): string;
 }
 
 /** @hidden */
@@ -1265,6 +1290,38 @@ export class File extends IonicNativePlugin {
       .then(srcfe => {
         return this.resolveDirectoryUrl(newPath).then(deste => {
           return this.copy(srcfe, deste, newFileName);
+        });
+      });
+  }
+
+  /**
+   * Copy a file in various methods. If file exists, will fail to copy.
+   *
+   * @param {string} path Base FileSystem. Please refer to the iOS and Android filesystem above
+   * @param {string} fileName Name of file to copy
+   * @param {string} newPath Base FileSystem of new location
+   * @param {string} newFileName New name of file to copy to (leave blank to remain the same)
+   * @returns {Promise<Entry>} Returns a Promise that resolves to an Entry or rejects with an error.
+   */
+  @CordovaCheck()
+  copyUpdated(config: {
+    path: string,
+    newPath: string,
+    newName?: string
+  }): Promise<Entry> {
+    // newFileName = newFileName || fileName;
+
+    if (/^\//.test(config.newName)) {
+      const err = new FileError(5);
+      err.message = 'file name cannot start with /';
+      return Promise.reject<any>(err);
+    }
+
+    return this.resolveLocalFilesystemUrl(config.path)
+      .then(srcfe => {
+        return this.resolveDirectoryUrl(config.newPath).then(deste => {
+          return srcfe.copy(deste, config.newName || '');
+          // return this.copy(srcfe, deste, newFileName);
         });
       });
   }

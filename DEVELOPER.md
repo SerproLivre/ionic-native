@@ -113,6 +113,8 @@ The `@Cordova` decorator has a few more options now.
 
 You need to run `npm run build` in the `ionic-native` project, this will create a `dist` directory. The `dist` directory will contain a sub directory `@ionic-native` with all the packages compiled in there. Copy the package(s) you created/modified to your app's node_modules under the `@ionic-native` directory. (e.g. `cp -r dist/@ionic-native/plugin-name ../my-app/node_modules/@ionic-native/`).
 
+> **PS:** To build a specific package, you can do `npm run build -- [plugin-name]`
+
 ### Cleaning the code
 
 You need to run `npm run lint` to analyze the code and ensure its consistency with the repository style. Fix any errors before submitting a PR.
