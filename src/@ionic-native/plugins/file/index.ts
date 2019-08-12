@@ -1297,11 +1297,19 @@ export class File extends IonicNativePlugin {
   /**
    * Copy a file in various methods. If file exists, will fail to copy.
    *
-   * @param {string} path Base FileSystem. Please refer to the iOS and Android filesystem above
-   * @param {string} fileName Name of file to copy
-   * @param {string} newPath Base FileSystem of new location
-   * @param {string} newFileName New name of file to copy to (leave blank to remain the same)
+   * @param {{
+   *     path: string,
+   *     newPath: string,
+   *     newName?: string
+   *   }} config Config properties to copy a file or a entire directory 
+   * 
+   * `config.path` Base FileSystem. Please refer to the iOS and Android filesystem above.
+   * 
+   * `config.newPath` Base FileSystem of new location.
+   * 
+   * `config.newFileName` New name of file to copy to (leave blank to remain the same)
    * @returns {Promise<Entry>} Returns a Promise that resolves to an Entry or rejects with an error.
+   * @memberof File
    */
   @CordovaCheck()
   copyUpdated(config: {
@@ -1309,7 +1317,6 @@ export class File extends IonicNativePlugin {
     newPath: string,
     newName?: string
   }): Promise<Entry> {
-    // newFileName = newFileName || fileName;
 
     if (/^\//.test(config.newName)) {
       const err = new FileError(5);
@@ -1318,10 +1325,9 @@ export class File extends IonicNativePlugin {
     }
 
     return this.resolveLocalFilesystemUrl(config.path)
-      .then(srcfe => {
+      .then(srcEntry => {
         return this.resolveDirectoryUrl(config.newPath).then(deste => {
-          return srcfe.copy(deste, config.newName || '');
-          // return this.copy(srcfe, deste, newFileName);
+          return srcEntry.copy(deste, config.newName || '');
         });
       });
   }
